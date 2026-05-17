@@ -1,14 +1,22 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
+from app.modules.store import init_db
 import os
 
 load_dotenv()
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_db()
+    yield
+
 app = FastAPI(
-    titel = "WazuhAI",
-    description= "AI-powered anomaly detection on Wazuh alerts",
-    version= "0.1.0"
+    title="WazuhAI",
+    description="AI-powered anomaly detection on Wazuh alerts",
+    version="0.1.0",
+    lifespan=lifespan
 )
 
 app.add_middleware(
@@ -20,7 +28,7 @@ app.add_middleware(
 
 @app.get("/")
 def root():
-    return{
+    return {
         "project": "WazuhAI",
         "status": "running",
         "version": "0.1.0"
