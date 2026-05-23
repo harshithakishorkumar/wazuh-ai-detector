@@ -19,7 +19,7 @@ def init_db():
             timestamp      TIMESTAMP,
             agent_name     VARCHAR,
             agent_ip       VARCHAR,
-            rule_ip        VARCHAR,
+            rule_id        VARCHAR,
             rule_description VARCHAR,
             rule_level      INTEGER,
             rule_groups     VARCHAR,
@@ -37,20 +37,21 @@ def init_db():
 def insert_alert(alert: dict):
     con = get_connection()
     con.execute("""
-        INSERT OR IGNORE alerts (
+        INSERT INTO alerts (
                 id, timestamp, agent_name, agent_ip,
                 rule_id, rule_description, rule_level,
                 rule_groups, location, full_log
                 ) VALUES (?,?,?,?,?,?,?,?,?,?)
+                ON CONFLICT (id) DO NOTHING
     """, [
         alert.get("id"),
         alert.get("timestamp"),
         alert.get("agent_name"),
         alert.get("agent_ip"),
-        alert.get("rule_ip"),
+        alert.get("rule_id"),
         alert.get("rule_description"),
         alert.get("rule_level"),
-        alert.get("rule_group"),
+        alert.get("rule_groups"),
         alert.get("location"),
         alert.get("full_log"),
 
@@ -61,7 +62,7 @@ def get_alerts(limit:int = 100, anomaly_only: bool = False) -> pd.DataFrame:
     con = get_connection()
     query = "SELECT * FROM alerts"
     if anomaly_only:
-        query += "WHERE is_anomaly = TRUE"
+        query += " WHERE is_anomaly = TRUE"
     query +=f" ORDER BY anomaly_score DESC LIMIT {limit}"
     df = con.execute(query).df()
     con.close()
